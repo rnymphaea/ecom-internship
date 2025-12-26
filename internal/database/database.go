@@ -7,6 +7,6 @@ import (
 )
 
 type Database interface {
-	GetAllToDos() ([]model.ToDo, error)
-	GetToDoByID(id int) (model.ToDo, error)
+	GetAllToDos(ctx context.Context) ([]model.ToDo, error)
+	GetToDoByID(ctx context.Context, id int) (model.ToDo, error)
 }

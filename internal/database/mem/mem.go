@@ -1,10 +1,14 @@
 package mem
 
 import (
+	"sync"
+
+	"ecom-internship/internal/logger"
 	"ecom-internship/internal/model"
 )
 
 type MemDB struct {
 	data []model.ToDo
-	last int
+	log  logger.Logger
+	mu   sync.RWMutex
 }

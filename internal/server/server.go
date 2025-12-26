@@ -28,7 +28,7 @@ func New(cfg *config.ServerConfig, router *http.ServeMux, log logger.Logger) *Se
 }
 
 func (s *Server) Start() error {
-	s.log.Debugf("starting HTTP server")
+	s.log.Debug("starting HTTP server")
 	return s.server.ListenAndServe()
 }
 

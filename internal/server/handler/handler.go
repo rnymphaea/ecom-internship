@@ -17,7 +17,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		toDos, err := db.GetAllToDos()
+		toDos, err := db.GetAllToDos(r.Context())
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
@@ -27,7 +27,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 		}
 
 		if err = json.NewEncoder(w).Encode(response); err != nil {
-			log.Error(err, "failed to encode response")
+			log.Error("failed to encode response: %w", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 	}

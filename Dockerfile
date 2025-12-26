@@ -4,7 +4,7 @@ RUN apk add --no-cache git
 
 WORKDIR /app 
 
-COPY go.mod go.sum ./
+COPY go.mod ./
 RUN go mod download
 
 COPY . .
@@ -18,7 +18,7 @@ FROM alpine:3.19
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
-COPY --from=builder /app/server /todo
+COPY --from=builder /app/server /server
 
 USER appuser:appgroup
 
