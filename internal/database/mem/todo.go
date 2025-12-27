@@ -34,6 +34,15 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
+	index, found := db.find(ctx, id)
+	if found {
+		return db.data[index], nil
+	} else {
+		return model.ToDo{}, errors.New("not found")
+	}
+}
+
+func (db *MemDB) find(ctx context.Context, id int) (int, bool) {
 	index, found := slices.BinarySearchFunc(
 		db.data,
 		model.ToDo{
@@ -43,19 +52,15 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 			return a.ID - b.ID
 		},
 	)
-
-	if found {
-		return db.data[index], nil
-	} else {
-		return model.ToDo{}, errors.New("not found")
-	}
+	return index, found
 }
 
 func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if _, err := db.GetToDoByID(ctx, todo.ID); err != nil {
+	_, found := db.find(ctx, todo.ID)
+	if todo.ID == 0 || found {
 		if len(db.data) == 0 {
 			todo.ID = 1
 		} else {
@@ -68,4 +73,35 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 
 	db.data = append(db.data, todo)
 	return todo.ID, nil
+}
+
+func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) (bool, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	index, found := db.find(ctx, todo.ID)
+	if found {
+		todo.CreatedAt = db.data[index].CreatedAt
+		todo.UpdatedAt = time.Now()
+		db.data[index] = todo
+	} else {
+		todo.CreatedAt = time.Now()
+		todo.UpdatedAt = time.Now()
+		db.data = append(db.data, todo)
+	}
+
+	return found, nil
+}
+
+func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	index, found := db.find(ctx, id)
+	if !found {
+		return errors.New("not found")
+	} else {
+		db.data = append(db.data[:index], db.data[index+1:]...)
+		return nil
+	}
 }

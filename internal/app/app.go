@@ -25,14 +25,12 @@ func Run() {
 
 	app.Logger.Info("config loaded successfully")
 
-	app.Server.Start()
-
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		if err := app.Server.Start(); err != nil && err != http.ErrServerClosed {
-			app.Logger.Error("failed to start server: %w", err)
+			app.Logger.Error("failed to start server", "error", err)
 		}
 	}()
 
@@ -43,9 +41,8 @@ func Run() {
 	defer cancel()
 
 	if err := app.Server.Stop(ctx); err != nil {
-		app.Logger.Error("failed to shutdown server: %w", err)
+		app.Logger.Error("failed to shutdown server", "error", err)
 	}
 
 	app.Logger.Info("server stopped gracefully")
-
 }
