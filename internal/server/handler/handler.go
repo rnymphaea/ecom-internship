@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	_ "errors"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -52,8 +52,13 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 
 		toDo, err := db.GetToDoByID(r.Context(), id)
 		if err != nil {
-			log.Error("error get todo by id", "error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			if errors.Is(err, database.ErrNotFound) {
+				log.Error("invalid id", "error", err)
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				log.Error("error get todo by id", "error", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -83,8 +88,12 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 
 		id, err := db.CreateToDo(r.Context(), toDo)
 		if err != nil {
-			log.Error("error create todo", "error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			if errors.Is(err, database.ErrIDAlreadyExists) {
+				http.Error(w, "ToDo with this ID already exists", http.StatusConflict)
+			} else {
+				log.Error("error create todo", "error", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -162,8 +171,13 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		}
 
 		if err = db.DeleteToDo(r.Context(), id); err != nil {
-			log.Error("failed to delete todo", "error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			if errors.Is(err, database.ErrNotFound) {
+				log.Error("invalid id", "error", err)
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				log.Error("failed to update todo", "error", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
 			return
 		}
 

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 
 	"ecom-internship/internal/model"
 )
@@ -13,3 +14,8 @@ type Database interface {
 	UpdateToDo(ctx context.Context, todo model.ToDo) (bool, error)
 	DeleteToDo(ctx context.Context, id int) error
 }
+
+var (
+	ErrNotFound        = errors.New("todo not found")
+	ErrIDAlreadyExists = errors.New("todo with provided id already exists")
+)

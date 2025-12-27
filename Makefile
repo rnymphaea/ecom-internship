@@ -36,8 +36,6 @@ api-test:
 	@echo "6. GET /todos/999 (not found)"
 	@curl -v $(API_URL)/todos/999
 	@echo ""
-	@echo "=== Testing PUT endpoints ==="
-	@echo ""
 	@echo "7. PUT /todos/1 (update existing - success)"
 	@curl -v -X PUT $(API_URL)/todos/1 -H "Content-Type: application/json" -d '{"caption":"Updated caption","description":"Updated description","is_completed":true}'
 	@echo ""
@@ -63,6 +61,3 @@ api-test:
 	@echo ""
 	@echo "=== API test completed ==="
 
-clean:
-	docker stop $$(docker ps -q --filter ancestor=$(IMAGE)) 2>/dev/null || true
-	docker rmi $(IMAGE) 2>/dev/null || true

@@ -1,13 +1,11 @@
 package mem
 
 import (
-	_ "cmp"
 	"context"
-	_ "encoding/json"
-	"errors"
 	"slices"
 	"time"
 
+	"ecom-internship/internal/database"
 	"ecom-internship/internal/logger"
 	"ecom-internship/internal/model"
 )
@@ -38,7 +36,7 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	if found {
 		return db.data[index], nil
 	} else {
-		return model.ToDo{}, errors.New("not found")
+		return model.ToDo{}, database.ErrNotFound
 	}
 }
 
@@ -60,7 +58,11 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	defer db.mu.Unlock()
 
 	_, found := db.find(ctx, todo.ID)
-	if todo.ID == 0 || found {
+	if found {
+		return -1, database.ErrIDAlreadyExists
+	}
+
+	if todo.ID == 0 {
 		if len(db.data) == 0 {
 			todo.ID = 1
 		} else {
@@ -99,7 +101,7 @@ func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 
 	index, found := db.find(ctx, id)
 	if !found {
-		return errors.New("not found")
+		return database.ErrNotFound
 	} else {
 		db.data = append(db.data[:index], db.data[index+1:]...)
 		return nil
