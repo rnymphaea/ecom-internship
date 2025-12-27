@@ -2,7 +2,7 @@ IMAGE := server
 PORT := 8080
 API_URL := http://localhost:$(PORT)
 
-.PHONY: all build run test api-test clean
+.PHONY: all build run test api-test
 
 all: build run
 

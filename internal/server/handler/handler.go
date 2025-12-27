@@ -23,6 +23,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 
 		toDos, err := db.GetAllToDos(r.Context())
 		if err != nil {
+			log.Error("failed get all todos", "error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}

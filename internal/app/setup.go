@@ -17,18 +17,20 @@ type App struct {
 	Logger   logger.Logger
 }
 
-func setup(cfg config.Config) (*App, error) {
-	log, err := initLogger(cfg.Logger)
+func setup(cfg *config.Config) (*App, error) {
+	rootLogger, err := initLogger(cfg.Logger)
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := initDatabase(cfg.Storage, log)
+	dbLogger := rootLogger.With("component", "database")
+	db, err := initDatabase(cfg.Storage, dbLogger)
 	if err != nil {
 		return nil, err
 	}
 
-	srv, err := initServer(cfg.Server, log, db)
+	srvLogger := rootLogger.With("component", "database")
+	srv, err := initServer(cfg.Server, srvLogger, db)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +38,7 @@ func setup(cfg config.Config) (*App, error) {
 	return &App{
 		Server:   srv,
 		Database: db,
-		Logger:   log,
+		Logger:   rootLogger,
 	}, nil
 }
 
@@ -53,15 +55,15 @@ func initLogger(cfg config.LoggerConfig) (logger.Logger, error) {
 func initDatabase(cfg config.StorageConfig, log logger.Logger) (database.Database, error) {
 	switch cfg.Type {
 	case "mem":
-		return mem.New(log.With("component", "database")), nil
+		return mem.New(log), nil
 	default:
-		log.Warn("unknown storage type: %s, using in-memory", cfg.Type)
-		return mem.New(log.With("component", "database")), nil
+		log.Warn("unknown storage type, using in-memory", "type", cfg.Type)
+		return mem.New(log), nil
 	}
 }
 
 func initServer(cfg config.ServerConfig, log logger.Logger, db database.Database) (*server.Server, error) {
-	router := server.NewRouter(log.With("component", "server"), db)
+	router := server.NewRouter(log, db)
 	srv := server.New(&cfg, router, log)
 	return srv, nil
 }

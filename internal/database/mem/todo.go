@@ -70,8 +70,9 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 		}
 	}
 
-	todo.CreatedAt = time.Now()
-	todo.UpdatedAt = time.Now()
+	createdAt := time.Now()
+	todo.CreatedAt = createdAt
+	todo.UpdatedAt = createdAt
 
 	db.data = append(db.data, todo)
 	return todo.ID, nil
@@ -87,8 +88,9 @@ func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) (bool, error) 
 		todo.UpdatedAt = time.Now()
 		db.data[index] = todo
 	} else {
-		todo.CreatedAt = time.Now()
-		todo.UpdatedAt = time.Now()
+		createdAt := time.Now()
+		todo.CreatedAt = createdAt
+		todo.UpdatedAt = createdAt
 		db.data = append(db.data, todo)
 	}
 

@@ -19,7 +19,7 @@ func Run() {
 		log.Fatal(err)
 	}
 
-	app, err := setup(*cfg)
+	app, err := setup(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
