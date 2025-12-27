@@ -30,7 +30,7 @@ func Run() {
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		if err := app.Server.Start(); err != nil && errors.Is(err, http.ErrServerClosed) {
+		if err := app.Server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			app.Logger.Error("failed to start server", "error", err)
 		}
 	}()
