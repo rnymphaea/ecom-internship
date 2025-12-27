@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -26,10 +27,10 @@ func Run() {
 	app.Logger.Info("config loaded successfully")
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		if err := app.Server.Start(); err != nil && err != http.ErrServerClosed {
+		if err := app.Server.Start(); err != nil && errors.Is(err, http.ErrServerClosed) {
 			app.Logger.Error("failed to start server", "error", err)
 		}
 	}()
