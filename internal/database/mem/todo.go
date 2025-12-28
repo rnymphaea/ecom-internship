@@ -136,15 +136,15 @@ func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 	index, found := db.find(id)
 	if !found {
 		return database.ErrNotFound
-	} else {
-		if err := ctx.Err(); err != nil {
-			db.log.Info("Context cancelled", "func", funcName)
-
-			return err
-		}
-
-		db.data = append(db.data[:index], db.data[index+1:]...)
-
-		return nil
 	}
+
+	if err := ctx.Err(); err != nil {
+		db.log.Info("Context cancelled", "func", funcName)
+
+		return err
+	}
+
+	db.data = append(db.data[:index], db.data[index+1:]...)
+
+	return nil
 }
