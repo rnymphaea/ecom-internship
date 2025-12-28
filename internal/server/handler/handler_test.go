@@ -50,7 +50,6 @@ func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 		if _, exists := m.todos[todo.ID]; exists {
 			return 0, database.ErrIDAlreadyExists
 		}
-		todo.ID = todo.ID
 	} else {
 		m.nextID++
 		todo.ID = m.nextID
@@ -59,7 +58,7 @@ func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	return todo.ID, nil
 }
 
-func (m *mockDB) UpdateToDo(ctx context.Context, todo model.ToDo) (bool, error) {
+func (m *mockDB) UpsertToDo(ctx context.Context, todo model.ToDo) (bool, error) {
 	if m.shouldErr {
 		return false, errors.New("database error")
 	}
@@ -249,7 +248,7 @@ func TestCreateToDo(t *testing.T) {
 	}
 }
 
-func TestUpdateToDo(t *testing.T) {
+func TestUpsertToDo(t *testing.T) {
 	logger := std.New("debug")
 	db := &mockDB{
 		todos: map[int]model.ToDo{
@@ -257,11 +256,11 @@ func TestUpdateToDo(t *testing.T) {
 		},
 	}
 
-	handler := UpdateToDo(logger, db)
+	handler := UpsertToDo(logger, db)
 
-	update := updateToDoRequest{
-		Caption:     "Updated",
-		Description: "Updated Description",
+	update := upsertToDoRequest{
+		Caption:     "Upsertd",
+		Description: "Upsertd Description",
 		IsCompleted: true,
 	}
 	body, _ := json.Marshal(update)

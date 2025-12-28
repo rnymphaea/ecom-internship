@@ -11,8 +11,6 @@ import (
 	"ecom-internship/internal/model"
 )
 
-const BASE_URL = "http://localhost:8080/todos/"
-
 type allToDosResponse struct {
 	ToDos []model.ToDo `json:"todos"`
 }
@@ -122,19 +120,19 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			return
 		}
 
-		url := BASE_URL + strconv.Itoa(id)
-		w.Header().Add("Location", url)
+		location := buildLocation(r, id)
+		w.Header().Add("Location", location)
 		w.WriteHeader(http.StatusCreated)
 	}
 }
 
-type updateToDoRequest struct {
+type upsertToDoRequest struct {
 	Caption     string `json:"caption"`
 	Description string `json:"description"`
 	IsCompleted bool   `json:"is_completed"`
 }
 
-func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
+func UpsertToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
@@ -151,7 +149,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			return
 		}
 
-		var update updateToDoRequest
+		var update upsertToDoRequest
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 			log.Error("failed to decode request",
 				"request_id", requestID,
@@ -174,7 +172,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			IsCompleted: update.IsCompleted,
 		}
 
-		found, err := db.UpdateToDo(r.Context(), todo)
+		found, err := db.UpsertToDo(r.Context(), todo)
 		if err != nil {
 			log.Error("failed to update todo",
 				"request_id", requestID,
@@ -186,8 +184,8 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		if found {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			url := BASE_URL + strconv.Itoa(id)
-			w.Header().Add("Location", url)
+			location := buildLocation(r, id)
+			w.Header().Add("Location", location)
 			w.WriteHeader(http.StatusCreated)
 		}
 	}

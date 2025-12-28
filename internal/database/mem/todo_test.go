@@ -128,7 +128,7 @@ func TestMemDB_GetToDoByID(t *testing.T) {
 	}
 }
 
-func TestMemDB_UpdateToDo(t *testing.T) {
+func TestMemDB_UpsertToDo(t *testing.T) {
 	logger := std.New("debug")
 	db := New(logger)
 	ctx := context.Background()
@@ -151,9 +151,9 @@ func TestMemDB_UpdateToDo(t *testing.T) {
 		IsCompleted: true,
 	}
 
-	found, err := db.UpdateToDo(ctx, updated)
+	found, err := db.UpsertToDo(ctx, updated)
 	if err != nil {
-		t.Fatalf("UpdateToDo failed: %v", err)
+		t.Fatalf("UpsertToDo failed: %v", err)
 	}
 	if !found {
 		t.Error("Expected todo to be found for update")
@@ -179,9 +179,9 @@ func TestMemDB_UpdateToDo(t *testing.T) {
 		IsCompleted: false,
 	}
 
-	found, err = db.UpdateToDo(ctx, newTodo)
+	found, err = db.UpsertToDo(ctx, newTodo)
 	if err != nil {
-		t.Fatalf("UpdateToDo failed: %v", err)
+		t.Fatalf("UpsertToDo failed: %v", err)
 	}
 	if found {
 		t.Error("Expected todo not to be found (should create new)")

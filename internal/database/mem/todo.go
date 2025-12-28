@@ -2,7 +2,7 @@ package mem
 
 import (
 	"context"
-	"slices"
+	_ "slices"
 	"time"
 
 	"ecom-internship/internal/database"
@@ -41,16 +41,13 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 }
 
 func (db *MemDB) find(ctx context.Context, id int) (int, bool) {
-	index, found := slices.BinarySearchFunc(
-		db.data,
-		model.ToDo{
-			ID: id,
-		},
-		func(a, b model.ToDo) int {
-			return a.ID - b.ID
-		},
-	)
-	return index, found
+	for ind, value := range db.data {
+		if value.ID == id {
+			return ind, true
+		}
+	}
+
+	return -1, false
 }
 
 func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
@@ -78,7 +75,7 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	return todo.ID, nil
 }
 
-func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) (bool, error) {
+func (db *MemDB) UpsertToDo(ctx context.Context, todo model.ToDo) (bool, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
