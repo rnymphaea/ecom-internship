@@ -75,23 +75,20 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	return todo.ID, nil
 }
 
-func (db *MemDB) UpsertToDo(ctx context.Context, todo model.ToDo) (bool, error) {
+func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
 	index, found := db.find(ctx, todo.ID)
-	if found {
-		todo.CreatedAt = db.data[index].CreatedAt
-		todo.UpdatedAt = time.Now()
-		db.data[index] = todo
-	} else {
-		createdAt := time.Now()
-		todo.CreatedAt = createdAt
-		todo.UpdatedAt = createdAt
-		db.data = append(db.data, todo)
+	if !found {
+		return database.ErrNotFound
 	}
 
-	return found, nil
+	todo.CreatedAt = db.data[index].CreatedAt
+	todo.UpdatedAt = time.Now()
+	db.data[index] = todo
+
+	return nil
 }
 
 func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {

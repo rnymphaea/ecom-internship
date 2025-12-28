@@ -14,7 +14,6 @@ func TestMemDB_CreateToDo(t *testing.T) {
 	db := New(logger)
 	ctx := context.Background()
 
-	// Test 1: Create todo without ID
 	todo1 := model.ToDo{
 		Caption:     "Test Todo 1",
 		Description: "Test Description 1",
@@ -28,7 +27,6 @@ func TestMemDB_CreateToDo(t *testing.T) {
 		t.Errorf("Expected ID 1, got %d", id)
 	}
 
-	// Test 2: Create todo with ID 0 (should auto-generate)
 	todo2 := model.ToDo{
 		Caption:     "Test Todo 2",
 		Description: "Test Description 2",
@@ -42,7 +40,6 @@ func TestMemDB_CreateToDo(t *testing.T) {
 		t.Errorf("Expected ID 2, got %d", id2)
 	}
 
-	// Test 3: Create todo with existing ID (should fail)
 	todo3 := model.ToDo{
 		ID:          1,
 		Caption:     "Test Todo 3",
@@ -54,7 +51,6 @@ func TestMemDB_CreateToDo(t *testing.T) {
 		t.Errorf("Expected ErrIDAlreadyExists, got %v", err)
 	}
 
-	// Test 4: Create todo with custom valid ID
 	todo4 := model.ToDo{
 		ID:          100,
 		Caption:     "Test Todo 100",
@@ -75,7 +71,6 @@ func TestMemDB_GetAllToDos(t *testing.T) {
 	db := New(logger)
 	ctx := context.Background()
 
-	// Empty database
 	todos, err := db.GetAllToDos(ctx)
 	if err != nil {
 		t.Fatalf("GetAllToDos failed: %v", err)
@@ -84,7 +79,6 @@ func TestMemDB_GetAllToDos(t *testing.T) {
 		t.Errorf("Expected 0 todos, got %d", len(todos))
 	}
 
-	// Add some todos
 	db.CreateToDo(ctx, model.ToDo{Caption: "Todo 1", Description: "Desc 1"})
 	db.CreateToDo(ctx, model.ToDo{Caption: "Todo 2", Description: "Desc 2"})
 
@@ -102,7 +96,6 @@ func TestMemDB_GetToDoByID(t *testing.T) {
 	db := New(logger)
 	ctx := context.Background()
 
-	// Create a todo
 	todo := model.ToDo{
 		Caption:     "Test Todo",
 		Description: "Test Description",
@@ -112,7 +105,6 @@ func TestMemDB_GetToDoByID(t *testing.T) {
 		t.Fatalf("CreateToDo failed: %v", err)
 	}
 
-	// Test 1: Get existing todo
 	retrieved, err := db.GetToDoByID(ctx, id)
 	if err != nil {
 		t.Fatalf("GetToDoByID failed: %v", err)
@@ -121,19 +113,17 @@ func TestMemDB_GetToDoByID(t *testing.T) {
 		t.Errorf("Expected caption %s, got %s", todo.Caption, retrieved.Caption)
 	}
 
-	// Test 2: Get non-existing todo
 	_, err = db.GetToDoByID(ctx, 999)
 	if err != database.ErrNotFound {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}
 }
 
-func TestMemDB_UpsertToDo(t *testing.T) {
+func TestMemDB_UpdateToDo(t *testing.T) {
 	logger := std.New("debug")
 	db := New(logger)
 	ctx := context.Background()
 
-	// Create a todo
 	original := model.ToDo{
 		Caption:     "Original",
 		Description: "Original Description",
@@ -143,7 +133,6 @@ func TestMemDB_UpsertToDo(t *testing.T) {
 		t.Fatalf("CreateToDo failed: %v", err)
 	}
 
-	// Test 1: Update existing todo
 	updated := model.ToDo{
 		ID:          id,
 		Caption:     "Updated",
@@ -151,15 +140,11 @@ func TestMemDB_UpsertToDo(t *testing.T) {
 		IsCompleted: true,
 	}
 
-	found, err := db.UpsertToDo(ctx, updated)
+	err = db.UpdateToDo(ctx, updated)
 	if err != nil {
-		t.Fatalf("UpsertToDo failed: %v", err)
-	}
-	if !found {
-		t.Error("Expected todo to be found for update")
+		t.Fatalf("UpdateToDo failed: %v", err)
 	}
 
-	// Verify update
 	retrieved, err := db.GetToDoByID(ctx, id)
 	if err != nil {
 		t.Fatalf("GetToDoByID failed: %v", err)
@@ -171,7 +156,6 @@ func TestMemDB_UpsertToDo(t *testing.T) {
 		t.Error("Expected IsCompleted to be true")
 	}
 
-	// Test 2: Update non-existing todo (should create)
 	newTodo := model.ToDo{
 		ID:          999,
 		Caption:     "New via Update",
@@ -179,21 +163,14 @@ func TestMemDB_UpsertToDo(t *testing.T) {
 		IsCompleted: false,
 	}
 
-	found, err = db.UpsertToDo(ctx, newTodo)
-	if err != nil {
-		t.Fatalf("UpsertToDo failed: %v", err)
-	}
-	if found {
-		t.Error("Expected todo not to be found (should create new)")
+	err = db.UpdateToDo(ctx, newTodo)
+	if err != database.ErrNotFound {
+		t.Errorf("Expected ErrNotFound for non-existent todo, got %v", err)
 	}
 
-	// Verify new todo was created
-	retrieved, err = db.GetToDoByID(ctx, 999)
-	if err != nil {
-		t.Fatalf("GetToDoByID failed: %v", err)
-	}
-	if retrieved.Caption != newTodo.Caption {
-		t.Errorf("Expected caption %s, got %s", newTodo.Caption, retrieved.Caption)
+	_, err = db.GetToDoByID(ctx, 999)
+	if err != database.ErrNotFound {
+		t.Errorf("Expected ErrNotFound for non-existent todo, got %v", err)
 	}
 }
 
@@ -202,7 +179,6 @@ func TestMemDB_DeleteToDo(t *testing.T) {
 	db := New(logger)
 	ctx := context.Background()
 
-	// Create a todo
 	todo := model.ToDo{
 		Caption:     "Test Todo",
 		Description: "Test Description",
@@ -212,19 +188,16 @@ func TestMemDB_DeleteToDo(t *testing.T) {
 		t.Fatalf("CreateToDo failed: %v", err)
 	}
 
-	// Test 1: Delete existing todo
 	err = db.DeleteToDo(ctx, id)
 	if err != nil {
 		t.Fatalf("DeleteToDo failed: %v", err)
 	}
 
-	// Verify deletion
 	_, err = db.GetToDoByID(ctx, id)
 	if err != database.ErrNotFound {
 		t.Errorf("Expected ErrNotFound after deletion, got %v", err)
 	}
 
-	// Test 2: Delete non-existing todo
 	err = db.DeleteToDo(ctx, 999)
 	if err != database.ErrNotFound {
 		t.Errorf("Expected ErrNotFound, got %v", err)
@@ -236,7 +209,6 @@ func TestMemDB_ConcurrentAccess(t *testing.T) {
 	db := New(logger)
 	ctx := context.Background()
 
-	// Start multiple goroutines
 	const numGoroutines = 10
 	const opsPerGoroutine = 100
 	done := make(chan bool)
@@ -257,12 +229,10 @@ func TestMemDB_ConcurrentAccess(t *testing.T) {
 		}(i)
 	}
 
-	// Wait for all goroutines
 	for i := 0; i < numGoroutines; i++ {
 		<-done
 	}
 
-	// Verify data integrity
 	todos, err := db.GetAllToDos(ctx)
 	if err != nil {
 		t.Fatalf("GetAllToDos failed: %v", err)

@@ -126,13 +126,13 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	}
 }
 
-type upsertToDoRequest struct {
+type updateToDoRequest struct {
 	Caption     string `json:"caption"`
 	Description string `json:"description"`
 	IsCompleted bool   `json:"is_completed"`
 }
 
-func UpsertToDo(log logger.Logger, db database.Database) http.HandlerFunc {
+func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
@@ -149,7 +149,7 @@ func UpsertToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			return
 		}
 
-		var update upsertToDoRequest
+		var update updateToDoRequest
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 			log.Error("failed to decode request",
 				"request_id", requestID,
@@ -172,22 +172,23 @@ func UpsertToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			IsCompleted: update.IsCompleted,
 		}
 
-		found, err := db.UpsertToDo(r.Context(), todo)
+		err = db.UpdateToDo(r.Context(), todo)
 		if err != nil {
-			log.Error("failed to update todo",
-				"request_id", requestID,
-				"error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			if errors.Is(err, database.ErrNotFound) {
+				log.Error("invalid id",
+					"request_id", requestID,
+					"error", err)
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				log.Error("failed to update todo",
+					"request_id", requestID,
+					"error", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
 			return
 		}
 
-		if found {
-			w.WriteHeader(http.StatusNoContent)
-		} else {
-			location := buildLocation(r, id)
-			w.Header().Add("Location", location)
-			w.WriteHeader(http.StatusCreated)
-		}
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

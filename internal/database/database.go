@@ -11,7 +11,7 @@ type Database interface {
 	GetAllToDos(ctx context.Context) ([]model.ToDo, error)
 	GetToDoByID(ctx context.Context, id int) (model.ToDo, error)
 	CreateToDo(ctx context.Context, todo model.ToDo) (int, error)
-	UpsertToDo(ctx context.Context, todo model.ToDo) (bool, error)
+	UpdateToDo(ctx context.Context, todo model.ToDo) error
 	DeleteToDo(ctx context.Context, id int) error
 }
 

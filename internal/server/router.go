@@ -16,7 +16,7 @@ func NewRouter(log logger.Logger, db database.Database) *http.ServeMux {
 
 	mux.Handle("POST /todos", loggingMiddleware(log, handler.CreateToDo(log, db)))
 
-	mux.Handle("PUT /todos/{id}", loggingMiddleware(log, handler.UpsertToDo(log, db)))
+	mux.Handle("PUT /todos/{id}", loggingMiddleware(log, handler.UpdateToDo(log, db)))
 
 	mux.Handle("DELETE /todos/{id}", loggingMiddleware(log, handler.DeleteToDo(log, db)))
 

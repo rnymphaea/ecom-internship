@@ -45,10 +45,9 @@ api-test:
 	@echo "9. PUT /todos/1 (update with empty caption - should fail)"
 	@curl -v -X PUT $(API_URL)/todos/1 -H "Content-Type: application/json" -d '{"caption":"","description":"Empty caption","is_completed":false}'
 	@echo ""
-	@echo "10. Final check: GET /todos"
+	@echo "10. GET /todos"
 	@curl -v $(API_URL)/todos
 	@echo ""
-	@echo "=== Testing DELETE endpoints ==="
 	@echo ""
 	@echo "11. DELETE /todos/1 (delete existing)"
 	@curl -v -X DELETE $(API_URL)/todos/1

@@ -58,13 +58,15 @@ func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	return todo.ID, nil
 }
 
-func (m *mockDB) UpsertToDo(ctx context.Context, todo model.ToDo) (bool, error) {
+func (m *mockDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	if m.shouldErr {
-		return false, errors.New("database error")
+		return errors.New("database error")
 	}
-	_, exists := m.todos[todo.ID]
+	if _, exists := m.todos[todo.ID]; !exists {
+		return database.ErrNotFound
+	}
 	m.todos[todo.ID] = todo
-	return exists, nil
+	return nil
 }
 
 func (m *mockDB) DeleteToDo(ctx context.Context, id int) error {
@@ -248,7 +250,7 @@ func TestCreateToDo(t *testing.T) {
 	}
 }
 
-func TestUpsertToDo(t *testing.T) {
+func TestUpdateToDo(t *testing.T) {
 	logger := std.New("debug")
 	db := &mockDB{
 		todos: map[int]model.ToDo{
@@ -256,11 +258,11 @@ func TestUpsertToDo(t *testing.T) {
 		},
 	}
 
-	handler := UpsertToDo(logger, db)
+	handler := UpdateToDo(logger, db)
 
-	update := upsertToDoRequest{
-		Caption:     "Upsertd",
-		Description: "Upsertd Description",
+	update := updateToDoRequest{
+		Caption:     "Updated",
+		Description: "Updated Description",
 		IsCompleted: true,
 	}
 	body, _ := json.Marshal(update)
@@ -276,18 +278,26 @@ func TestUpsertToDo(t *testing.T) {
 		t.Errorf("Expected status 204 for update, got %d", w.Code)
 	}
 
+	updatedTodo, err := db.GetToDoByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("Failed to get updated todo: %v", err)
+	}
+	if updatedTodo.Caption != "Updated" {
+		t.Errorf("Expected caption 'Updated', got %s", updatedTodo.Caption)
+	}
+
 	update.Caption = "New via PUT"
 	body, _ = json.Marshal(update)
 
-	req = httptest.NewRequest("PUT", "/todos/2", bytes.NewReader(body))
-	req.SetPathValue("id", "2")
+	req = httptest.NewRequest("PUT", "/todos/999", bytes.NewReader(body))
+	req.SetPathValue("id", "999")
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 
 	handler(w, req)
 
-	if w.Code != http.StatusCreated {
-		t.Errorf("Expected status 201 for create via update, got %d", w.Code)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404 for non-existent todo, got %d", w.Code)
 	}
 
 	update.Caption = ""
@@ -313,6 +323,17 @@ func TestUpsertToDo(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status 400 for invalid ID, got %d", w.Code)
+	}
+
+	req = httptest.NewRequest("PUT", "/todos/1", bytes.NewReader([]byte("{invalid json")))
+	req.SetPathValue("id", "1")
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+
+	handler(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status 400 for invalid JSON, got %d", w.Code)
 	}
 
 	db.shouldErr = true
