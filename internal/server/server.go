@@ -29,10 +29,12 @@ func New(cfg *config.ServerConfig, router *http.ServeMux, log logger.Logger) *Se
 
 func (s *Server) Start() error {
 	s.log.Info("starting HTTP server", "port", s.server.Addr)
+
 	return s.server.ListenAndServe()
 }
 
 func (s *Server) Stop(ctx context.Context) error {
 	s.log.Info("shutting down server")
+
 	return s.server.Shutdown(ctx)
 }

@@ -2,14 +2,13 @@ package config
 
 import (
 	"os"
-	"strconv"
 	"time"
 )
 
 type Config struct {
-	Server  ServerConfig
-	Storage StorageConfig
-	Logger  LoggerConfig
+	Server  *ServerConfig
+	Storage *StorageConfig
+	Logger  *LoggerConfig
 }
 
 type ServerConfig struct {
@@ -29,38 +28,75 @@ type LoggerConfig struct {
 }
 
 func Load() (*Config, error) {
+	server, err := loadServerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	storage, err := loadStorageConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	logger, err := loadLoggerConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
-		Server: ServerConfig{
-			Port:         getEnv("PORT", "8080"),
-			ReadTimeout:  parseDuration(getEnv("READ_TIMEOUT", "10s")),
-			WriteTimeout: parseDuration(getEnv("WRITE_TIMEOUT", "10s")),
-			IdleTimeout:  parseDuration(getEnv("IDLE_TIMEOUT", "60s")),
-		},
-		Storage: StorageConfig{
-			getEnv("STORAGE_TYPE", "mem"),
-		},
-		Logger: LoggerConfig{
-			Type:  getEnv("LOGGER_TYPE", "std"),
-			Level: getEnv("LOG_LEVEL", "info"),
-		},
+		Server:  server,
+		Storage: storage,
+		Logger:  logger,
 	}
 
 	return cfg, nil
+}
+
+func loadServerConfig() (*ServerConfig, error) {
+	port := getEnv("PORT", "8080")
+
+	readTimeout, err := time.ParseDuration(getEnv("READ_TIMEOUT", "10s"))
+	if err != nil {
+		return nil, err
+	}
+
+	writeTimeout, err := time.ParseDuration(getEnv("WRITE_TIMEOUT", "10s"))
+	if err != nil {
+		return nil, err
+	}
+
+	idleTimeout, err := time.ParseDuration(getEnv("IDLE_TIMEOUT", "60s"))
+	if err != nil {
+		return nil, err
+	}
+
+	return &ServerConfig{
+		Port:         port,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
+	}, nil
+}
+
+//nolint:unparam
+func loadStorageConfig() (*StorageConfig, error) {
+	return &StorageConfig{
+		Type: getEnv("STORAGE_TYPE", "mem"),
+	}, nil
+}
+
+//nolint:unparam
+func loadLoggerConfig() (*LoggerConfig, error) {
+	return &LoggerConfig{
+		Type:  getEnv("LOGGER_TYPE", "std"),
+		Level: getEnv("LOG_LEVEL", "info"),
+	}, nil
 }
 
 func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
-	return defaultValue
-}
 
-func parseDuration(value string) time.Duration {
-	if duration, err := time.ParseDuration(value); err == nil {
-		return duration
-	}
-	if seconds, err := strconv.Atoi(value); err == nil {
-		return time.Duration(seconds) * time.Second
-	}
-	return 10 * time.Second
+	return defaultValue
 }

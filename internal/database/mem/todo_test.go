@@ -2,6 +2,7 @@ package mem
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"ecom-internship/internal/database"
@@ -47,7 +48,7 @@ func TestMemDB_CreateToDo(t *testing.T) {
 	}
 
 	_, err = db.CreateToDo(ctx, todo3)
-	if err != database.ErrIDAlreadyExists {
+	if !errors.Is(err, database.ErrIDAlreadyExists) {
 		t.Errorf("Expected ErrIDAlreadyExists, got %v", err)
 	}
 
@@ -79,8 +80,15 @@ func TestMemDB_GetAllToDos(t *testing.T) {
 		t.Errorf("Expected 0 todos, got %d", len(todos))
 	}
 
-	db.CreateToDo(ctx, model.ToDo{Caption: "Todo 1", Description: "Desc 1"})
-	db.CreateToDo(ctx, model.ToDo{Caption: "Todo 2", Description: "Desc 2"})
+	_, err = db.CreateToDo(ctx, model.ToDo{Caption: "Todo 1", Description: "Desc 1"})
+	if err != nil {
+		t.Fatalf("CreateToDo failed: %v", err)
+	}
+
+	_, err = db.CreateToDo(ctx, model.ToDo{Caption: "Todo 2", Description: "Desc 2"})
+	if err != nil {
+		t.Fatalf("CreateToDo failed: %v", err)
+	}
 
 	todos, err = db.GetAllToDos(ctx)
 	if err != nil {
@@ -114,7 +122,7 @@ func TestMemDB_GetToDoByID(t *testing.T) {
 	}
 
 	_, err = db.GetToDoByID(ctx, 999)
-	if err != database.ErrNotFound {
+	if !errors.Is(err, database.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}
 }
@@ -164,12 +172,12 @@ func TestMemDB_UpdateToDo(t *testing.T) {
 	}
 
 	err = db.UpdateToDo(ctx, newTodo)
-	if err != database.ErrNotFound {
+	if !errors.Is(err, database.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound for non-existent todo, got %v", err)
 	}
 
 	_, err = db.GetToDoByID(ctx, 999)
-	if err != database.ErrNotFound {
+	if !errors.Is(err, database.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound for non-existent todo, got %v", err)
 	}
 }
@@ -194,12 +202,12 @@ func TestMemDB_DeleteToDo(t *testing.T) {
 	}
 
 	_, err = db.GetToDoByID(ctx, id)
-	if err != database.ErrNotFound {
+	if !errors.Is(err, database.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound after deletion, got %v", err)
 	}
 
 	err = db.DeleteToDo(ctx, 999)
-	if err != database.ErrNotFound {
+	if !errors.Is(err, database.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}
 }
@@ -213,9 +221,9 @@ func TestMemDB_ConcurrentAccess(t *testing.T) {
 	const opsPerGoroutine = 100
 	done := make(chan bool)
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(goroutineID int) {
-			for j := 0; j < opsPerGoroutine; j++ {
+			for j := range opsPerGoroutine {
 				id := goroutineID*1000 + j
 
 				todo := model.ToDo{
@@ -223,13 +231,15 @@ func TestMemDB_ConcurrentAccess(t *testing.T) {
 					Caption:     "Todo",
 					Description: "Description",
 				}
+
+				//nolint:errcheck,gosec
 				db.CreateToDo(ctx, todo)
 			}
 			done <- true
 		}(i)
 	}
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		<-done
 	}
 

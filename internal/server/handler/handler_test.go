@@ -20,31 +20,35 @@ type mockDB struct {
 	shouldErr bool
 }
 
+var ErrDb = errors.New("database error")
+
 func (m *mockDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	if m.shouldErr {
-		return nil, errors.New("database error")
+		return nil, ErrDb
 	}
 	todos := make([]model.ToDo, 0, len(m.todos))
 	for _, todo := range m.todos {
 		todos = append(todos, todo)
 	}
+
 	return todos, nil
 }
 
 func (m *mockDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	if m.shouldErr {
-		return model.ToDo{}, errors.New("database error")
+		return model.ToDo{}, ErrDb
 	}
 	todo, ok := m.todos[id]
 	if !ok {
 		return model.ToDo{}, database.ErrNotFound
 	}
+
 	return todo, nil
 }
 
 func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	if m.shouldErr {
-		return 0, errors.New("database error")
+		return 0, ErrDb
 	}
 	if todo.ID != 0 {
 		if _, exists := m.todos[todo.ID]; exists {
@@ -55,28 +59,31 @@ func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 		todo.ID = m.nextID
 	}
 	m.todos[todo.ID] = todo
+
 	return todo.ID, nil
 }
 
 func (m *mockDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	if m.shouldErr {
-		return errors.New("database error")
+		return ErrDb
 	}
 	if _, exists := m.todos[todo.ID]; !exists {
 		return database.ErrNotFound
 	}
 	m.todos[todo.ID] = todo
+
 	return nil
 }
 
 func (m *mockDB) DeleteToDo(ctx context.Context, id int) error {
 	if m.shouldErr {
-		return errors.New("database error")
+		return ErrDb
 	}
 	if _, exists := m.todos[id]; !exists {
 		return database.ErrNotFound
 	}
 	delete(m.todos, id)
+
 	return nil
 }
 
@@ -90,7 +97,7 @@ func TestGetAllToDos(t *testing.T) {
 	}
 
 	handler := GetAllToDos(logger, db)
-	req := httptest.NewRequest("GET", "/todos", nil)
+	req := httptest.NewRequest(http.MethodGet, "/todos", nil)
 	w := httptest.NewRecorder()
 
 	handler(w, req)
@@ -127,7 +134,7 @@ func TestGetToDoByID(t *testing.T) {
 
 	handler := GetToDoByID(logger, db)
 
-	req := httptest.NewRequest("GET", "/todos/1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/todos/1", nil)
 	req.SetPathValue("id", "1")
 	w := httptest.NewRecorder()
 	handler(w, req)
@@ -144,7 +151,7 @@ func TestGetToDoByID(t *testing.T) {
 		t.Errorf("Expected caption 'Todo 1', got %s", todo.Caption)
 	}
 
-	req = httptest.NewRequest("GET", "/todos/abc", nil)
+	req = httptest.NewRequest(http.MethodGet, "/todos/abc", nil)
 	req.SetPathValue("id", "abc")
 	w = httptest.NewRecorder()
 	handler(w, req)
@@ -153,7 +160,7 @@ func TestGetToDoByID(t *testing.T) {
 		t.Errorf("Expected status 400 for invalid ID, got %d", w.Code)
 	}
 
-	req = httptest.NewRequest("GET", "/todos/999", nil)
+	req = httptest.NewRequest(http.MethodGet, "/todos/999", nil)
 	req.SetPathValue("id", "999")
 	w = httptest.NewRecorder()
 	handler(w, req)
@@ -163,7 +170,7 @@ func TestGetToDoByID(t *testing.T) {
 	}
 
 	db.shouldErr = true
-	req = httptest.NewRequest("GET", "/todos/1", nil)
+	req = httptest.NewRequest(http.MethodGet, "/todos/1", nil)
 	req.SetPathValue("id", "1")
 	w = httptest.NewRecorder()
 	handler(w, req)
@@ -173,6 +180,7 @@ func TestGetToDoByID(t *testing.T) {
 	}
 }
 
+//nolint:funlen,cyclop
 func TestCreateToDo(t *testing.T) {
 	logger := std.New("debug")
 	db := &mockDB{todos: make(map[int]model.ToDo)}
@@ -183,9 +191,12 @@ func TestCreateToDo(t *testing.T) {
 		Caption:     "New Todo",
 		Description: "New Description",
 	}
-	body, _ := json.Marshal(todo)
+	body, err := json.Marshal(todo)
+	if err != nil {
+		t.Fatalf("Failed to marshal todo: %v", err)
+	}
 
-	req := httptest.NewRequest("POST", "/todos", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/todos", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -199,9 +210,12 @@ func TestCreateToDo(t *testing.T) {
 	}
 
 	todo.Caption = ""
-	body, _ = json.Marshal(todo)
+	body, err = json.Marshal(todo)
+	if err != nil {
+		t.Fatalf("Failed to marshal todo: %v", err)
+	}
 
-	req = httptest.NewRequest("POST", "/todos", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPost, "/todos", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 
@@ -211,7 +225,7 @@ func TestCreateToDo(t *testing.T) {
 		t.Errorf("Expected status 400 for empty caption, got %d", w.Code)
 	}
 
-	req = httptest.NewRequest("POST", "/todos", bytes.NewReader([]byte("{invalid json")))
+	req = httptest.NewRequest(http.MethodPost, "/todos", bytes.NewReader([]byte("{invalid json")))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 
@@ -223,9 +237,12 @@ func TestCreateToDo(t *testing.T) {
 
 	db.todos[5] = model.ToDo{ID: 5, Caption: "Existing"}
 	todo = model.ToDo{ID: 5, Caption: "Duplicate"}
-	body, _ = json.Marshal(todo)
+	body, err = json.Marshal(todo)
+	if err != nil {
+		t.Fatalf("Failed to marshal todo: %v", err)
+	}
 
-	req = httptest.NewRequest("POST", "/todos", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPost, "/todos", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 
@@ -237,9 +254,12 @@ func TestCreateToDo(t *testing.T) {
 
 	db.shouldErr = true
 	todo = model.ToDo{Caption: "Should Fail"}
-	body, _ = json.Marshal(todo)
+	body, err = json.Marshal(todo)
+	if err != nil {
+		t.Fatalf("Failed to marshal todo: %v", err)
+	}
 
-	req = httptest.NewRequest("POST", "/todos", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPost, "/todos", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 
@@ -250,6 +270,7 @@ func TestCreateToDo(t *testing.T) {
 	}
 }
 
+//nolint:funlen,cyclop
 func TestUpdateToDo(t *testing.T) {
 	logger := std.New("debug")
 	db := &mockDB{
@@ -265,9 +286,12 @@ func TestUpdateToDo(t *testing.T) {
 		Description: "Updated Description",
 		IsCompleted: true,
 	}
-	body, _ := json.Marshal(update)
+	body, err := json.Marshal(update)
+	if err != nil {
+		t.Fatalf("Failed to marshal update: %v", err)
+	}
 
-	req := httptest.NewRequest("PUT", "/todos/1", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPut, "/todos/1", bytes.NewReader(body))
 	req.SetPathValue("id", "1")
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -287,9 +311,12 @@ func TestUpdateToDo(t *testing.T) {
 	}
 
 	update.Caption = "New via PUT"
-	body, _ = json.Marshal(update)
+	body, err = json.Marshal(update)
+	if err != nil {
+		t.Fatalf("Failed to marshal update: %v", err)
+	}
 
-	req = httptest.NewRequest("PUT", "/todos/999", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPut, "/todos/999", bytes.NewReader(body))
 	req.SetPathValue("id", "999")
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
@@ -301,9 +328,12 @@ func TestUpdateToDo(t *testing.T) {
 	}
 
 	update.Caption = ""
-	body, _ = json.Marshal(update)
+	body, err = json.Marshal(update)
+	if err != nil {
+		t.Fatalf("Failed to marshal update: %v", err)
+	}
 
-	req = httptest.NewRequest("PUT", "/todos/1", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPut, "/todos/1", bytes.NewReader(body))
 	req.SetPathValue("id", "1")
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
@@ -314,7 +344,7 @@ func TestUpdateToDo(t *testing.T) {
 		t.Errorf("Expected status 400 for empty caption, got %d", w.Code)
 	}
 
-	req = httptest.NewRequest("PUT", "/todos/abc", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPut, "/todos/abc", bytes.NewReader(body))
 	req.SetPathValue("id", "abc")
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
@@ -325,7 +355,7 @@ func TestUpdateToDo(t *testing.T) {
 		t.Errorf("Expected status 400 for invalid ID, got %d", w.Code)
 	}
 
-	req = httptest.NewRequest("PUT", "/todos/1", bytes.NewReader([]byte("{invalid json")))
+	req = httptest.NewRequest(http.MethodPut, "/todos/1", bytes.NewReader([]byte("{invalid json")))
 	req.SetPathValue("id", "1")
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
@@ -338,9 +368,12 @@ func TestUpdateToDo(t *testing.T) {
 
 	db.shouldErr = true
 	update.Caption = "Should Fail"
-	body, _ = json.Marshal(update)
+	body, err = json.Marshal(update)
+	if err != nil {
+		t.Fatalf("Failed to marshal update: %v", err)
+	}
 
-	req = httptest.NewRequest("PUT", "/todos/1", bytes.NewReader(body))
+	req = httptest.NewRequest(http.MethodPut, "/todos/1", bytes.NewReader(body))
 	req.SetPathValue("id", "1")
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
@@ -362,7 +395,7 @@ func TestDeleteToDo(t *testing.T) {
 
 	handler := DeleteToDo(logger, db)
 
-	req := httptest.NewRequest("DELETE", "/todos/1", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/todos/1", nil)
 	req.SetPathValue("id", "1")
 	w := httptest.NewRecorder()
 
@@ -372,7 +405,7 @@ func TestDeleteToDo(t *testing.T) {
 		t.Errorf("Expected status 204, got %d", w.Code)
 	}
 
-	req = httptest.NewRequest("DELETE", "/todos/999", nil)
+	req = httptest.NewRequest(http.MethodDelete, "/todos/999", nil)
 	req.SetPathValue("id", "999")
 	w = httptest.NewRecorder()
 
@@ -382,7 +415,7 @@ func TestDeleteToDo(t *testing.T) {
 		t.Errorf("Expected status 404 for non-existent todo, got %d", w.Code)
 	}
 
-	req = httptest.NewRequest("DELETE", "/todos/abc", nil)
+	req = httptest.NewRequest(http.MethodDelete, "/todos/abc", nil)
 	req.SetPathValue("id", "abc")
 	w = httptest.NewRecorder()
 
@@ -394,7 +427,7 @@ func TestDeleteToDo(t *testing.T) {
 
 	db.shouldErr = true
 	db.todos[2] = model.ToDo{ID: 2, Caption: "Should Fail"}
-	req = httptest.NewRequest("DELETE", "/todos/2", nil)
+	req = httptest.NewRequest(http.MethodDelete, "/todos/2", nil)
 	req.SetPathValue("id", "2")
 	w = httptest.NewRecorder()
 
@@ -415,7 +448,7 @@ func TestResponseStructures(t *testing.T) {
 		t.Fatalf("Failed to marshal response: %v", err)
 	}
 
-	var decoded map[string]interface{}
+	var decoded map[string]any
 	if err := json.Unmarshal(body, &decoded); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}

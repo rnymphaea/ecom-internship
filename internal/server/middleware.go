@@ -19,7 +19,7 @@ func loggingMiddleware(log logger.Logger, next http.Handler) http.Handler {
 
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		duration := time.Duration(time.Since(start))
+		duration := time.Since(start)
 
 		log.Info("request completed",
 			"request_id", requestID,
@@ -29,12 +29,13 @@ func loggingMiddleware(log logger.Logger, next http.Handler) http.Handler {
 			"user_agent", r.UserAgent(),
 			"duration", duration.String(),
 		)
-
 	})
 }
 
 func generateRequestID() string {
 	extra := make([]byte, 2)
+
+	//nolint:errcheck,gosec
 	rand.Read(extra)
 
 	requestID := fmt.Sprintf("%d-%s", time.Now().UnixNano(), hex.EncodeToString(extra))

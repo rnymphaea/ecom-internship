@@ -15,6 +15,9 @@ run:
 test:
 	go test ./... -v
 
+lint:
+	~/go/bin/golangci-lint run
+
 api-test:
 	@echo "=== Testing API endpoints ==="
 	@echo ""

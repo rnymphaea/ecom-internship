@@ -1,0 +1,32 @@
+version: "2"
+
+linters:
+  default: all
+  disable:
+    - depguard
+    - exhaustruct
+    - mnd
+    - varnamelen
+    - wsl
+    - wsl_v5
+    - ireturn
+    - noinlineerr
+    - paralleltest
+    - revive
+    - testpackage
+    - wrapcheck
+
+  settings:
+    funlen:
+      lines: 70
+      statements: 60
+      ignore-comments: true
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

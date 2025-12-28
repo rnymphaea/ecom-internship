@@ -42,28 +42,34 @@ func setup(cfg *config.Config) (*App, error) {
 	}, nil
 }
 
-func initLogger(cfg config.LoggerConfig) (logger.Logger, error) {
+//nolint:unparam
+func initLogger(cfg *config.LoggerConfig) (logger.Logger, error) {
 	switch cfg.Type {
 	case "std":
 		return std.New(cfg.Level), nil
 	default:
 		log.Printf("unknown logger type: %s, using std", cfg.Type)
+
 		return std.New(cfg.Level), nil
 	}
 }
 
-func initDatabase(cfg config.StorageConfig, log logger.Logger) (database.Database, error) {
+//nolint:unparam
+func initDatabase(cfg *config.StorageConfig, log logger.Logger) (database.Database, error) {
 	switch cfg.Type {
 	case "mem":
 		return mem.New(log), nil
 	default:
 		log.Warn("unknown storage type, using in-memory", "type", cfg.Type)
+
 		return mem.New(log), nil
 	}
 }
 
-func initServer(cfg config.ServerConfig, log logger.Logger, db database.Database) (*server.Server, error) {
+//nolint:unparam
+func initServer(cfg *config.ServerConfig, log logger.Logger, db database.Database) (*server.Server, error) {
 	router := server.NewRouter(log, db)
-	srv := server.New(&cfg, router, log)
+	srv := server.New(cfg, router, log)
+
 	return srv, nil
 }

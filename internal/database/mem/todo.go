@@ -25,6 +25,7 @@ func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 
 	res := make([]model.ToDo, len(db.data))
 	copy(res, db.data)
+
 	return res, nil
 }
 
@@ -72,6 +73,7 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	todo.UpdatedAt = createdAt
 
 	db.data = append(db.data, todo)
+
 	return todo.ID, nil
 }
 
@@ -100,6 +102,7 @@ func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 		return database.ErrNotFound
 	} else {
 		db.data = append(db.data[:index], db.data[index+1:]...)
+
 		return nil
 	}
 }

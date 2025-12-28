@@ -27,6 +27,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 				"request_id", requestID,
 				"error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
+
 			return
 		}
 
@@ -57,6 +58,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 				"error", err,
 				"id", idFromPath)
 			http.Error(w, "invalid id", http.StatusBadRequest)
+
 			return
 		}
 
@@ -73,6 +75,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
+
 			return
 		}
 
@@ -97,6 +100,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				"request_id", requestID,
 				"error", err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 			return
 		}
 
@@ -104,6 +108,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("empty caption",
 				"request_id", requestID)
 			http.Error(w, "Empty caption provided", http.StatusBadRequest)
+
 			return
 		}
 
@@ -117,6 +122,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
+
 			return
 		}
 
@@ -146,6 +152,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				"error", err,
 				"id", idFromPath)
 			http.Error(w, "invalid id", http.StatusBadRequest)
+
 			return
 		}
 
@@ -155,6 +162,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				"request_id", requestID,
 				"error", err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 			return
 		}
 
@@ -162,6 +170,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("empty caption",
 				"request_id", requestID)
 			http.Error(w, "Empty caption provided", http.StatusBadRequest)
+
 			return
 		}
 
@@ -185,6 +194,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
+
 			return
 		}
 
@@ -206,6 +216,7 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				"error", err,
 				"id", idFromPath)
 			http.Error(w, "invalid id", http.StatusBadRequest)
+
 			return
 		}
 
@@ -221,6 +232,7 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
+
 			return
 		}
 
