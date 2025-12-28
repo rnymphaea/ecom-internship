@@ -29,7 +29,7 @@ func setup(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	srvLogger := rootLogger.With("component", "database")
+	srvLogger := rootLogger.With("component", "server")
 	srv, err := initServer(cfg.Server, srvLogger, db)
 	if err != nil {
 		return nil, err

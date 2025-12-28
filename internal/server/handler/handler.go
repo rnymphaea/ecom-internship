@@ -21,9 +21,13 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
+		requestID := getRequestID(r)
+
 		toDos, err := db.GetAllToDos(r.Context())
 		if err != nil {
-			log.Error("failed get all todos", "error", err)
+			log.Error("failed get all todos",
+				"request_id", requestID,
+				"error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -33,7 +37,9 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 		}
 
 		if err = json.NewEncoder(w).Encode(response); err != nil {
-			log.Error("failed to encode response", "error", err)
+			log.Error("failed to encode response",
+				"request_id", requestID,
+				"error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 	}
@@ -43,10 +49,15 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
+		requestID := getRequestID(r)
+
 		idFromPath := r.PathValue("id")
 		id, err := strconv.Atoi(idFromPath)
 		if err != nil {
-			log.Error("invalid id", "id", idFromPath)
+			log.Error("invalid id",
+				"request_id", requestID,
+				"error", err,
+				"id", idFromPath)
 			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
@@ -54,17 +65,23 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 		toDo, err := db.GetToDoByID(r.Context(), id)
 		if err != nil {
 			if errors.Is(err, database.ErrNotFound) {
-				log.Error("invalid id", "error", err)
+				log.Error("invalid id",
+					"request_id", requestID,
+					"error", err)
 				w.WriteHeader(http.StatusNotFound)
 			} else {
-				log.Error("error get todo by id", "error", err)
+				log.Error("error get todo by id",
+					"request_id", requestID,
+					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
 			return
 		}
 
 		if err = json.NewEncoder(w).Encode(toDo); err != nil {
-			log.Error("failed to encode response", "error", err)
+			log.Error("failed to encode response",
+				"request_id", requestID,
+				"error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 	}
@@ -74,15 +91,20 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
+		requestID := getRequestID(r)
+
 		var toDo model.ToDo
 		if err := json.NewDecoder(r.Body).Decode(&toDo); err != nil {
-			log.Error("failed to decode request", "error", err)
+			log.Error("failed to decode request",
+				"request_id", requestID,
+				"error", err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if len(toDo.Caption) == 0 {
-			log.Error("empty caption")
+			log.Error("empty caption",
+				"request_id", requestID)
 			http.Error(w, "Empty caption provided", http.StatusBadRequest)
 			return
 		}
@@ -92,7 +114,9 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			if errors.Is(err, database.ErrIDAlreadyExists) {
 				http.Error(w, "ToDo with this ID already exists", http.StatusConflict)
 			} else {
-				log.Error("error create todo", "error", err)
+				log.Error("error create todo",
+					"request_id", requestID,
+					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
 			return
@@ -114,23 +138,31 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
+		requestID := getRequestID(r)
+
 		idFromPath := r.PathValue("id")
 		id, err := strconv.Atoi(idFromPath)
 		if err != nil {
-			log.Error("invalid id", "id", idFromPath)
+			log.Error("invalid id",
+				"request_id", requestID,
+				"error", err,
+				"id", idFromPath)
 			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
 		var update updateToDoRequest
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-			log.Error("failed to decode request", "error", err)
+			log.Error("failed to decode request",
+				"request_id", requestID,
+				"error", err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if len(update.Caption) == 0 {
-			log.Error("empty caption")
+			log.Error("empty caption",
+				"request_id", requestID)
 			http.Error(w, "Empty caption provided", http.StatusBadRequest)
 			return
 		}
@@ -144,7 +176,9 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 
 		found, err := db.UpdateToDo(r.Context(), todo)
 		if err != nil {
-			log.Error("failed to update todo", "error", err)
+			log.Error("failed to update todo",
+				"request_id", requestID,
+				"error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -163,20 +197,29 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
+		requestID := getRequestID(r)
+
 		idFromPath := r.PathValue("id")
 		id, err := strconv.Atoi(idFromPath)
 		if err != nil {
-			log.Error("invalid id", "id", idFromPath)
+			log.Error("invalid id",
+				"request_id", requestID,
+				"error", err,
+				"id", idFromPath)
 			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
 		if err = db.DeleteToDo(r.Context(), id); err != nil {
 			if errors.Is(err, database.ErrNotFound) {
-				log.Error("invalid id", "error", err)
+				log.Error("invalid id",
+					"request_id", requestID,
+					"error", err)
 				w.WriteHeader(http.StatusNotFound)
 			} else {
-				log.Error("failed to update todo", "error", err)
+				log.Error("failed to update todo",
+					"request_id", requestID,
+					"error", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
 			return
