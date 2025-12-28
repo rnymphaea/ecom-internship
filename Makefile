@@ -1,4 +1,5 @@
 IMAGE := server
+CONTAINER := server-container
 PORT := 8080
 API_URL := http://localhost:$(PORT)
 
@@ -10,10 +11,10 @@ build:
 	docker build -t $(IMAGE) .
 
 run:
-	docker run --rm -p $(PORT):$(PORT) $(IMAGE)
+	docker run --name $(CONTAINER) --rm -p $(PORT):$(PORT) $(IMAGE)
 
 test:
-	go test ./... -v
+	go test ./... -v -count=1
 
 lint:
 	~/go/bin/golangci-lint run

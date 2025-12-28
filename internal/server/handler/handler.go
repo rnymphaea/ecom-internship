@@ -9,6 +9,7 @@ import (
 	"ecom-internship/internal/database"
 	"ecom-internship/internal/logger"
 	"ecom-internship/internal/model"
+	"ecom-internship/internal/pkg/httputils"
 )
 
 type allToDosResponse struct {
@@ -19,7 +20,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		requestID := getRequestID(r)
+		requestID := httputils.RequestID(r)
 
 		toDos, err := db.GetAllToDos(r.Context())
 		if err != nil {
@@ -48,7 +49,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		requestID := getRequestID(r)
+		requestID := httputils.RequestID(r)
 
 		idFromPath := r.PathValue("id")
 		id, err := strconv.Atoi(idFromPath)
@@ -65,7 +66,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 		toDo, err := db.GetToDoByID(r.Context(), id)
 		if err != nil {
 			if errors.Is(err, database.ErrNotFound) {
-				log.Error("invalid id",
+				log.Debug("invalid id",
 					"request_id", requestID,
 					"error", err)
 				w.WriteHeader(http.StatusNotFound)
@@ -92,7 +93,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-		requestID := getRequestID(r)
+		requestID := httputils.RequestID(r)
 
 		var toDo model.ToDo
 		if err := json.NewDecoder(r.Body).Decode(&toDo); err != nil {
@@ -105,7 +106,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		}
 
 		if len(toDo.Caption) == 0 {
-			log.Error("empty caption",
+			log.Debug("empty caption",
 				"request_id", requestID)
 			http.Error(w, "Empty caption provided", http.StatusBadRequest)
 
@@ -126,7 +127,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			return
 		}
 
-		location := buildLocation(r, id)
+		location := httputils.BuildLocation(r, id)
 		w.Header().Add("Location", location)
 		w.WriteHeader(http.StatusCreated)
 	}
@@ -142,7 +143,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-		requestID := getRequestID(r)
+		requestID := httputils.RequestID(r)
 
 		idFromPath := r.PathValue("id")
 		id, err := strconv.Atoi(idFromPath)
@@ -167,7 +168,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		}
 
 		if len(update.Caption) == 0 {
-			log.Error("empty caption",
+			log.Debug("empty caption",
 				"request_id", requestID)
 			http.Error(w, "Empty caption provided", http.StatusBadRequest)
 
@@ -184,7 +185,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		err = db.UpdateToDo(r.Context(), todo)
 		if err != nil {
 			if errors.Is(err, database.ErrNotFound) {
-				log.Error("invalid id",
+				log.Debug("invalid id",
 					"request_id", requestID,
 					"error", err)
 				w.WriteHeader(http.StatusNotFound)
@@ -206,7 +207,7 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-		requestID := getRequestID(r)
+		requestID := httputils.RequestID(r)
 
 		idFromPath := r.PathValue("id")
 		id, err := strconv.Atoi(idFromPath)
@@ -222,7 +223,7 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 
 		if err = db.DeleteToDo(r.Context(), id); err != nil {
 			if errors.Is(err, database.ErrNotFound) {
-				log.Error("invalid id",
+				log.Debug("invalid id",
 					"request_id", requestID,
 					"error", err)
 				w.WriteHeader(http.StatusNotFound)

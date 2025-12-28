@@ -20,20 +20,37 @@ func New(log logger.Logger) *MemDB {
 }
 
 func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
+	const funcName = "GetAllToDos"
+
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	res := make([]model.ToDo, len(db.data))
 	copy(res, db.data)
 
+	if err := ctx.Err(); err != nil {
+		db.log.Info("Context cancelled", "func", funcName)
+
+		return nil, err
+	}
+
 	return res, nil
 }
 
 func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
+	const funcName = "GetToDoByID"
+
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
-	index, found := db.find(ctx, id)
+	index, found := db.find(id)
+
+	if err := ctx.Err(); err != nil {
+		db.log.Info("Context cancelled", "func", funcName)
+
+		return model.ToDo{}, err
+	}
+
 	if found {
 		return db.data[index], nil
 	} else {
@@ -41,7 +58,7 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	}
 }
 
-func (db *MemDB) find(ctx context.Context, id int) (int, bool) {
+func (db *MemDB) find(id int) (int, bool) {
 	for ind, value := range db.data {
 		if value.ID == id {
 			return ind, true
@@ -52,10 +69,12 @@ func (db *MemDB) find(ctx context.Context, id int) (int, bool) {
 }
 
 func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
+	const funcName = "CreateToDo"
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	_, found := db.find(ctx, todo.ID)
+	_, found := db.find(todo.ID)
 	if found {
 		return -1, database.ErrIDAlreadyExists
 	}
@@ -72,35 +91,58 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	todo.CreatedAt = createdAt
 	todo.UpdatedAt = createdAt
 
+	if err := ctx.Err(); err != nil {
+		db.log.Info("Context cancelled", "func", funcName)
+
+		return -1, err
+	}
+
 	db.data = append(db.data, todo)
 
 	return todo.ID, nil
 }
 
 func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
+	const funcName = "UpdateToDo"
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	index, found := db.find(ctx, todo.ID)
+	index, found := db.find(todo.ID)
 	if !found {
 		return database.ErrNotFound
 	}
 
 	todo.CreatedAt = db.data[index].CreatedAt
 	todo.UpdatedAt = time.Now()
+
+	if err := ctx.Err(); err != nil {
+		db.log.Info("Context cancelled", "func", funcName)
+
+		return err
+	}
+
 	db.data[index] = todo
 
 	return nil
 }
 
 func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
+	const funcName = "DeleteToDo"
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	index, found := db.find(ctx, id)
+	index, found := db.find(id)
 	if !found {
 		return database.ErrNotFound
 	} else {
+		if err := ctx.Err(); err != nil {
+			db.log.Info("Context cancelled", "func", funcName)
+
+			return err
+		}
+
 		db.data = append(db.data[:index], db.data[index+1:]...)
 
 		return nil

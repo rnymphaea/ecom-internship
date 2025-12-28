@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -9,12 +8,13 @@ import (
 	"time"
 
 	"ecom-internship/internal/logger"
+	"ecom-internship/internal/pkg/httputils"
 )
 
 func loggingMiddleware(log logger.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := generateRequestID()
-		ctx := context.WithValue(r.Context(), "request_id", requestID)
+		ctx := httputils.WithRequestID(r.Context(), requestID)
 		r = r.WithContext(ctx)
 
 		start := time.Now()

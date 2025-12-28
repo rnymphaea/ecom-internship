@@ -224,7 +224,7 @@ func TestMemDB_ConcurrentAccess(t *testing.T) {
 	for i := range numGoroutines {
 		go func(goroutineID int) {
 			for j := range opsPerGoroutine {
-				id := goroutineID*1000 + j
+				id := goroutineID*1000 + j + 1
 
 				todo := model.ToDo{
 					ID:          id,
@@ -234,6 +234,8 @@ func TestMemDB_ConcurrentAccess(t *testing.T) {
 
 				//nolint:errcheck,gosec
 				db.CreateToDo(ctx, todo)
+				//nolint:errcheck,gosec
+				db.GetAllToDos(ctx)
 			}
 			done <- true
 		}(i)
