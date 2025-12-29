@@ -2,25 +2,49 @@ IMAGE := server
 CONTAINER := server-container
 PORT := 8080
 API_URL := http://localhost:$(PORT)
+LINTER := ~/go/bin/golangci-lint
 
-.PHONY: all build run test api-test
+.PHONY: all build run test lint prepare api-test
 
 all: build run
 
 build:
-	docker build -t $(IMAGE) .
+	@echo "Building app."
+	@echo "  Image: $(IMAGE)"
+	@echo ""
+
+	@docker build -t $(IMAGE) .
+
+	@echo ""
 
 run:
-	docker run --name $(CONTAINER) --rm -p $(PORT):$(PORT) $(IMAGE)
+	@echo "Starting app."
+	@echo "  Container: $(CONTAINER)"
+	@echo "  Port: $(PORT)"
+	@echo "  Image: $(IMAGE)"
+	@echo ""
+
+	@docker run --name $(CONTAINER) --rm -p $(PORT):$(PORT) $(IMAGE)
+
+	@echo ""
 
 test:
+	@echo "Starting tests"
 	go test ./... -v -count=1
 
+	@echo ""
+
+
 lint:
-	~/go/bin/golangci-lint run
+	@echo "Starting linters"
+	$(LINTER) run
+
+	@echo ""
+
+prepare: test lint
 
 api-test:
-	@echo "=== Testing API endpoints ==="
+	@echo "Testing API endpoints"
 	@echo ""
 	@echo "1. GET /todos (empty)"
 	@curl -v $(API_URL)/todos
@@ -52,7 +76,6 @@ api-test:
 	@echo "10. GET /todos"
 	@curl -v $(API_URL)/todos
 	@echo ""
-	@echo ""
 	@echo "11. DELETE /todos/1 (delete existing)"
 	@curl -v -X DELETE $(API_URL)/todos/1
 	@echo ""
@@ -62,5 +85,5 @@ api-test:
 	@echo "13. Final check: GET /todos (should be empty)"
 	@curl -v $(API_URL)/todos
 	@echo ""
-	@echo "=== API test completed ==="
+	@echo "API test completed"
 

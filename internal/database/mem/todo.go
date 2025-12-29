@@ -2,7 +2,6 @@ package mem
 
 import (
 	"context"
-	_ "slices"
 	"time"
 
 	"ecom-internship/internal/database"
@@ -10,6 +9,7 @@ import (
 	"ecom-internship/internal/model"
 )
 
+// New creates a new instance of in-memory storage.
 func New(log logger.Logger) *MemDB {
 	db := &MemDB{
 		data: make([]model.ToDo, 0),
@@ -19,6 +19,7 @@ func New(log logger.Logger) *MemDB {
 	return db
 }
 
+// GetAllToDos returns all ToDo items from the storage.
 func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	const funcName = "GetAllToDos"
 
@@ -37,6 +38,7 @@ func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	return res, nil
 }
 
+// GetToDoByID returns a ToDo item by its ID.
 func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	const funcName = "GetToDoByID"
 
@@ -51,11 +53,11 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 		return model.ToDo{}, err
 	}
 
-	if found {
-		return db.data[index], nil
-	} else {
+	if !found {
 		return model.ToDo{}, database.ErrNotFound
 	}
+
+	return db.data[index], nil
 }
 
 func (db *MemDB) find(id int) (int, bool) {
@@ -68,6 +70,7 @@ func (db *MemDB) find(id int) (int, bool) {
 	return -1, false
 }
 
+// CreateToDo creates a new ToDo item in the storage.
 func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	const funcName = "CreateToDo"
 
@@ -102,6 +105,7 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	return todo.ID, nil
 }
 
+// UpdateToDo updates an existing ToDo item.
 func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	const funcName = "UpdateToDo"
 
@@ -127,6 +131,7 @@ func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	return nil
 }
 
+// DeleteToDo deletes a ToDo item by its ID.
 func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 	const funcName = "DeleteToDo"
 

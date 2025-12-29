@@ -1,3 +1,4 @@
+// Package config provides application configuration loading.
 package config
 
 import (
@@ -5,12 +6,14 @@ import (
 	"time"
 )
 
+// Config contains all application configuration.
 type Config struct {
 	Server  *ServerConfig
 	Storage *StorageConfig
 	Logger  *LoggerConfig
 }
 
+// ServerConfig contains HTTP server settings.
 type ServerConfig struct {
 	Port         string
 	ReadTimeout  time.Duration
@@ -18,15 +21,18 @@ type ServerConfig struct {
 	IdleTimeout  time.Duration
 }
 
+// StorageConfig contains data storage settings.
 type StorageConfig struct {
 	Type string
 }
 
+// LoggerConfig contains logger settings.
 type LoggerConfig struct {
 	Type  string
 	Level string
 }
 
+// Load loads configuration from environment variables.
 func Load() (*Config, error) {
 	server, err := loadServerConfig()
 	if err != nil {

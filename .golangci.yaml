@@ -12,7 +12,6 @@ linters:
     - ireturn
     - noinlineerr
     - paralleltest
-    - revive
     - testpackage
     - wrapcheck
 

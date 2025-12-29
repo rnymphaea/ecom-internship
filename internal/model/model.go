@@ -1,9 +1,13 @@
+// Package model defines the application's models.
 package model
 
 import (
 	"time"
 )
 
+// ToDo represents a task (item).
+//
+//nolint:godox
 type ToDo struct {
 	ID          int       `json:"id"`
 	Caption     string    `json:"caption"`

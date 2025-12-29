@@ -11,6 +11,7 @@ import (
 	"ecom-internship/internal/server"
 )
 
+// App represents the main application with its dependencies.
 type App struct {
 	Server   *server.Server
 	Database database.Database

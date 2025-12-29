@@ -1,3 +1,4 @@
+// Package app provides the main application initialization and shutdown logic.
 package app
 
 import (
@@ -13,6 +14,7 @@ import (
 	"ecom-internship/internal/config"
 )
 
+// Run initializes and starts the HTTP server with graceful shutdown.
 func Run() {
 	cfg, err := config.Load()
 	if err != nil {

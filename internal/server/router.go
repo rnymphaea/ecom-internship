@@ -8,6 +8,7 @@ import (
 	"ecom-internship/internal/server/handler"
 )
 
+// NewRouter creates and configures the HTTP router with middleware.
 func NewRouter(log logger.Logger, db database.Database) *http.ServeMux {
 	mux := http.NewServeMux()
 

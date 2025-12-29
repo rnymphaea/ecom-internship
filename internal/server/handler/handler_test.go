@@ -22,6 +22,7 @@ type mockDB struct {
 
 var ErrDb = errors.New("database error")
 
+//nolint:revive
 func (m *mockDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	if m.shouldErr {
 		return nil, ErrDb
@@ -34,6 +35,7 @@ func (m *mockDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	return todos, nil
 }
 
+//nolint:revive
 func (m *mockDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	if m.shouldErr {
 		return model.ToDo{}, ErrDb
@@ -46,6 +48,7 @@ func (m *mockDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	return todo, nil
 }
 
+//nolint:revive
 func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	if m.shouldErr {
 		return 0, ErrDb
@@ -63,6 +66,7 @@ func (m *mockDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	return todo.ID, nil
 }
 
+//nolint:revive
 func (m *mockDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	if m.shouldErr {
 		return ErrDb
@@ -75,6 +79,7 @@ func (m *mockDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	return nil
 }
 
+//nolint:revive
 func (m *mockDB) DeleteToDo(ctx context.Context, id int) error {
 	if m.shouldErr {
 		return ErrDb

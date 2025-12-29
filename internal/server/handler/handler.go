@@ -1,3 +1,4 @@
+// Package handler provides HTTP handlers for the ToDo API.
 package handler
 
 import (
@@ -16,6 +17,7 @@ type allToDosResponse struct {
 	ToDos []model.ToDo `json:"todos"`
 }
 
+// GetAllToDos returns a handler for retrieving all ToDo items.
 func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -45,6 +47,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 	}
 }
 
+// GetToDoByID returns a handler for retrieving a ToDo item by ID.
 func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -89,6 +92,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 	}
 }
 
+// CreateToDo returns a handler for creating a new ToDo item.
 func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -139,6 +143,7 @@ type updateToDoRequest struct {
 	IsCompleted bool   `json:"is_completed"`
 }
 
+// UpdateToDo returns a handler for updating an existing ToDo item.
 func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -203,6 +208,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	}
 }
 
+// DeleteToDo returns a handler for deleting a ToDo item by ID.
 func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
