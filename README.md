@@ -3,6 +3,7 @@
 [![Go](https://img.shields.io/badge/Go-1.25.5-00ADD8?logo=go)](https://golang.org/)
 [![Docker](https://img.shields.io/badge/Docker-24-2496ED?logo=docker)](https://www.docker.com/)
 ---
+
 ## Содержание
 - [Обзор проекта](#-обзор-проекта)
 - [Основные возможности](#-основные-возможности)
@@ -10,6 +11,7 @@
 - [Структура проекта](#-структура-проекта)
 - [API Endpoints](#-api-endpoints)
 - [Быстрый старт](#-быстрый-старт)
+
 ---
 ## Обзор проекта
 
