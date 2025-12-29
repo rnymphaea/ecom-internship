@@ -15,4 +15,5 @@ type MemDB struct {
 	data []model.ToDo
 	log  logger.Logger
 	mu   sync.RWMutex
+	last int
 }
