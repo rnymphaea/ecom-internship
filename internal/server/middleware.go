@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"ecom-internship/internal/httputils"
 	"ecom-internship/internal/logger"
-	"ecom-internship/internal/pkg/httputils"
 )
 
 func loggingMiddleware(log logger.Logger, next http.Handler) http.Handler {

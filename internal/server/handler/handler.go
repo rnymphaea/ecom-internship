@@ -8,9 +8,9 @@ import (
 	"strconv"
 
 	"ecom-internship/internal/database"
+	"ecom-internship/internal/httputils"
 	"ecom-internship/internal/logger"
 	"ecom-internship/internal/model"
-	"ecom-internship/internal/pkg/httputils"
 )
 
 type allToDosResponse struct {

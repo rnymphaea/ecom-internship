@@ -30,7 +30,7 @@ func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	copy(res, db.data)
 
 	if err := ctx.Err(); err != nil {
-		db.log.Info("Context cancelled", "func", funcName)
+		db.log.Info("context cancelled", "func", funcName)
 
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	index, found := db.find(id)
 
 	if err := ctx.Err(); err != nil {
-		db.log.Info("Context cancelled", "func", funcName)
+		db.log.Info("context cancelled", "func", funcName)
 
 		return model.ToDo{}, err
 	}
@@ -95,7 +95,7 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	todo.UpdatedAt = createdAt
 
 	if err := ctx.Err(); err != nil {
-		db.log.Info("Context cancelled", "func", funcName)
+		db.log.Info("context cancelled", "func", funcName)
 
 		return -1, err
 	}
@@ -121,7 +121,7 @@ func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	todo.UpdatedAt = time.Now()
 
 	if err := ctx.Err(); err != nil {
-		db.log.Info("Context cancelled", "func", funcName)
+		db.log.Info("context cancelled", "func", funcName)
 
 		return err
 	}
@@ -144,7 +144,7 @@ func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 	}
 
 	if err := ctx.Err(); err != nil {
-		db.log.Info("Context cancelled", "func", funcName)
+		db.log.Info("context cancelled", "func", funcName)
 
 		return err
 	}

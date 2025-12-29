@@ -24,7 +24,7 @@ run:
 	@echo "  Image: $(IMAGE)"
 	@echo ""
 
-	@docker run --name $(CONTAINER) --rm -p $(PORT):$(PORT) $(IMAGE)
+	@docker run --name $(CONTAINER) --rm -p $(PORT):$(PORT) --env-file .env.example $(IMAGE)
 
 	@echo ""
 

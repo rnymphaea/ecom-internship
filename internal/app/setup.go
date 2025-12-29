@@ -1,7 +1,7 @@
 package app
 
 import (
-	"log"
+	"log/slog"
 
 	"ecom-internship/internal/config"
 	"ecom-internship/internal/database"
@@ -49,7 +49,7 @@ func initLogger(cfg *config.LoggerConfig) (logger.Logger, error) {
 	case "std":
 		return std.New(cfg.Level), nil
 	default:
-		log.Printf("unknown logger type: %s, using std", cfg.Type)
+		slog.Warn("unknown logger type, using std")
 
 		return std.New(cfg.Level), nil
 	}
