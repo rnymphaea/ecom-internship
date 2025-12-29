@@ -12,8 +12,8 @@ import (
 //
 //nolint:revive
 type MemDB struct {
-	data []model.ToDo
-	log  logger.Logger
-	mu   sync.RWMutex
-	last int
+	data  []model.ToDo
+	log   logger.Logger
+	mu    sync.RWMutex
+	maxID int
 }

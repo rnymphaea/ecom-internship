@@ -3,8 +3,11 @@ package httputils
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // KeyType represents the type of context key.
@@ -44,4 +47,16 @@ func BuildLocation(r *http.Request, id int) string {
 		r.URL.Path,
 		id,
 	)
+}
+
+// GenerateRequestID generates a request ID based on time and random bytes to avoid dublication.
+func GenerateRequestID() string {
+	extra := make([]byte, 2)
+
+	//nolint:errcheck,gosec
+	rand.Read(extra)
+
+	requestID := fmt.Sprintf("%d-%s", time.Now().UnixNano(), hex.EncodeToString(extra))
+
+	return requestID
 }

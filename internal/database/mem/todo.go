@@ -86,7 +86,7 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 		if len(db.data) == 0 {
 			todo.ID = 1
 		} else {
-			todo.ID = db.last + 1
+			todo.ID = db.maxID + 1
 		}
 	}
 
@@ -101,7 +101,7 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	}
 
 	db.data = append(db.data, todo)
-	db.last = todo.ID
+	db.maxID = todo.ID
 
 	return todo.ID, nil
 }
@@ -151,7 +151,7 @@ func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 	}
 
 	db.data = append(db.data[:index], db.data[index+1:]...)
-	db.last = db.findMaxID()
+	db.maxID = db.findMaxID()
 
 	return nil
 }

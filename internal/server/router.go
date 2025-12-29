@@ -12,14 +12,19 @@ import (
 func NewRouter(log logger.Logger, db database.Database) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.Handle("GET /todos", loggingMiddleware(log, handler.GetAllToDos(log, db)))
-	mux.Handle("GET /todos/{id}", loggingMiddleware(log, handler.GetToDoByID(log, db)))
+	middlewares := []func(logger.Logger, http.Handler) http.Handler{
+		panicRecoveryMiddleware,
+		loggingMiddleware,
+	}
 
-	mux.Handle("POST /todos", loggingMiddleware(log, handler.CreateToDo(log, db)))
+	mux.Handle("GET /todos", chain(log, handler.GetAllToDos(log, db), middlewares...))
+	mux.Handle("GET /todos/{id}", chain(log, handler.GetToDoByID(log, db), middlewares...))
 
-	mux.Handle("PUT /todos/{id}", loggingMiddleware(log, handler.UpdateToDo(log, db)))
+	mux.Handle("POST /todos", chain(log, handler.CreateToDo(log, db), middlewares...))
 
-	mux.Handle("DELETE /todos/{id}", loggingMiddleware(log, handler.DeleteToDo(log, db)))
+	mux.Handle("PUT /todos/{id}", chain(log, handler.UpdateToDo(log, db), middlewares...))
+
+	mux.Handle("DELETE /todos/{id}", chain(log, handler.DeleteToDo(log, db), middlewares...))
 
 	return mux
 }
