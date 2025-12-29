@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -9,6 +10,10 @@ func TestLoad_DefaultValues(t *testing.T) {
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate failed: %v", err)
 	}
 
 	if cfg.Server.Port != "8080" {
@@ -46,6 +51,10 @@ func TestLoad_WithEnvironment(t *testing.T) {
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate failed: %v", err)
 	}
 
 	if cfg.Server.Port != "9000" {
@@ -233,14 +242,8 @@ func TestConfig_StructsNotEmpty(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 
-	if cfg.Server == nil {
-		t.Error("Server config should not be nil")
-	}
-	if cfg.Storage == nil {
-		t.Error("Storage config should not be nil")
-	}
-	if cfg.Logger == nil {
-		t.Error("Logger config should not be nil")
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate failed: %v", err)
 	}
 }
 
@@ -266,5 +269,204 @@ func TestLoad_EmptyEnvVars(t *testing.T) {
 	}
 	if cfg.Logger.Level != "" {
 		t.Errorf("Expected empty log level, got %s", cfg.Logger.Level)
+	}
+}
+
+func TestValidate_EmptyPort(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "",
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		Logger: &LoggerConfig{
+			Level: "info",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Expected error for empty port")
+	}
+	if !errors.Is(err, ErrEmptyPort) {
+		t.Errorf("Expected ErrEmptyPort, got %v", err)
+	}
+}
+
+func TestValidate_InvalidReadTimeout(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "8080",
+			ReadTimeout:  0,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		Logger: &LoggerConfig{
+			Level: "info",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Expected error for zero read timeout")
+	}
+	if !errors.Is(err, ErrInvalidReadTimeout) {
+		t.Errorf("Expected ErrInvalidReadTimeout, got %v", err)
+	}
+}
+
+func TestValidate_NegativeReadTimeout(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "8080",
+			ReadTimeout:  -1 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		Logger: &LoggerConfig{
+			Level: "info",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Expected error for negative read timeout")
+	}
+	if !errors.Is(err, ErrInvalidReadTimeout) {
+		t.Errorf("Expected ErrInvalidReadTimeout, got %v", err)
+	}
+}
+
+func TestValidate_InvalidWriteTimeout(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "8080",
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 0,
+			IdleTimeout:  60 * time.Second,
+		},
+		Logger: &LoggerConfig{
+			Level: "info",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Expected error for zero write timeout")
+	}
+	if !errors.Is(err, ErrInvalidWriteTimeout) {
+		t.Errorf("Expected ErrInvalidWriteTimeout, got %v", err)
+	}
+}
+
+func TestValidate_InvalidIdleTimeout(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "8080",
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  0,
+		},
+		Logger: &LoggerConfig{
+			Level: "info",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Expected error for zero idle timeout")
+	}
+	if !errors.Is(err, ErrInvalidIdleTimeout) {
+		t.Errorf("Expected ErrInvalidIdleTimeout, got %v", err)
+	}
+}
+
+func TestValidate_InvalidLogLevel(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "8080",
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		Logger: &LoggerConfig{
+			Level: "invalid-level",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Expected error for invalid log level")
+	}
+	if !errors.Is(err, ErrInvalidLogLevel) {
+		t.Errorf("Expected ErrInvalidLogLevel, got %v", err)
+	}
+}
+
+func TestValidate_ValidConfig(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "8080",
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		Logger: &LoggerConfig{
+			Level: "debug",
+		},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("Expected no error for valid config, got %v", err)
+	}
+}
+
+func TestValidate_AllLogLevels(t *testing.T) {
+	levels := []string{"debug", "info", "warn", "error"}
+
+	for _, level := range levels {
+		t.Run(level, func(t *testing.T) {
+			cfg := &Config{
+				Server: &ServerConfig{
+					Port:         "8080",
+					ReadTimeout:  10 * time.Second,
+					WriteTimeout: 10 * time.Second,
+					IdleTimeout:  60 * time.Second,
+				},
+				Logger: &LoggerConfig{
+					Level: level,
+				},
+			}
+
+			err := cfg.Validate()
+			if err != nil {
+				t.Errorf("Expected no error for log level %s, got %v", level, err)
+			}
+		})
+	}
+}
+
+func TestValidate_CompleteValidConfig(t *testing.T) {
+	cfg := &Config{
+		Server: &ServerConfig{
+			Port:         "3000",
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+			IdleTimeout:  30 * time.Second,
+		},
+		Storage: &StorageConfig{
+			Type: "mem",
+		},
+		Logger: &LoggerConfig{
+			Type:  "std",
+			Level: "warn",
+		},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("Expected no error for complete valid config, got %v", err)
 	}
 }

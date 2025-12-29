@@ -3,7 +3,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"time"
 )
@@ -33,6 +32,15 @@ type LoggerConfig struct {
 	Type  string
 	Level string
 }
+
+// Configuration validation errors.
+var (
+	ErrEmptyPort           = errors.New("port cannot be empty")
+	ErrInvalidReadTimeout  = errors.New("read_timeout must be positive")
+	ErrInvalidWriteTimeout = errors.New("write_timeout must be positive")
+	ErrInvalidIdleTimeout  = errors.New("idle_timeout must be positive")
+	ErrInvalidLogLevel     = errors.New("invalid log level")
+)
 
 // Load loads configuration from environment variables.
 func Load() (*Config, error) {
@@ -112,29 +120,24 @@ func getEnv(key, defaultValue string) string {
 // Validate provides basic config validation.
 func (c *Config) Validate() error {
 	if c.Server.Port == "" {
-		//nolint:err113
-		return errors.New("port cannot be empty")
+		return ErrEmptyPort
 	}
 
 	if c.Server.ReadTimeout <= 0 {
-		//nolint:err113
-		return errors.New("read_timeout must be positive")
+		return ErrInvalidReadTimeout
 	}
 
 	if c.Server.WriteTimeout <= 0 {
-		//nolint:err113
-		return errors.New("write_timeout must be positive")
+		return ErrInvalidWriteTimeout
 	}
 
 	if c.Server.IdleTimeout <= 0 {
-		//nolint:err113
-		return errors.New("idle_timeout must be positive")
+		return ErrInvalidIdleTimeout
 	}
 
 	validLevels := map[string]bool{"debug": true, "info": true, "warn": true, "error": true}
 	if !validLevels[c.Logger.Level] {
-		//nolint:err113
-		return fmt.Errorf("invalid log level: %s", c.Logger.Level)
+		return ErrInvalidLogLevel
 	}
 
 	return nil
