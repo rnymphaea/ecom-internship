@@ -123,7 +123,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("failed to decode request",
 				"request_id", requestID,
 				"error", err)
-			writeError(w, http.StatusBadRequest, "Internal request body")
+			writeError(w, http.StatusBadRequest, "Invalid request body")
 
 			return
 		}

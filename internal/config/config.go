@@ -2,6 +2,8 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"time"
 )
@@ -105,4 +107,35 @@ func getEnv(key, defaultValue string) string {
 	}
 
 	return defaultValue
+}
+
+// Validate provides basic config validation.
+func (c *Config) Validate() error {
+	if c.Server.Port == "" {
+		//nolint:err113
+		return errors.New("port cannot be empty")
+	}
+
+	if c.Server.ReadTimeout <= 0 {
+		//nolint:err113
+		return errors.New("read_timeout must be positive")
+	}
+
+	if c.Server.WriteTimeout <= 0 {
+		//nolint:err113
+		return errors.New("write_timeout must be positive")
+	}
+
+	if c.Server.IdleTimeout <= 0 {
+		//nolint:err113
+		return errors.New("idle_timeout must be positive")
+	}
+
+	validLevels := map[string]bool{"debug": true, "info": true, "warn": true, "error": true}
+	if !validLevels[c.Logger.Level] {
+		//nolint:err113
+		return fmt.Errorf("invalid log level: %s", c.Logger.Level)
+	}
+
+	return nil
 }

@@ -21,6 +21,10 @@ func Run() {
 		log.Fatal(err)
 	}
 
+	if err := cfg.Validate(); err != nil {
+		log.Fatal("invalid config: ", err)
+	}
+
 	app, err := setup(cfg)
 	if err != nil {
 		log.Fatal(err)
