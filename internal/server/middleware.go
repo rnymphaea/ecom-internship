@@ -11,6 +11,7 @@ import (
 func loggingMiddleware(log logger.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := httputils.GenerateRequestID()
+
 		ctx := httputils.WithRequestID(r.Context(), requestID)
 		r = r.WithContext(ctx)
 

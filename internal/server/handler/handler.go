@@ -13,6 +13,23 @@ import (
 	"ecom-internship/internal/model"
 )
 
+type apiError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(apiError{
+		Code:    status,
+		Message: message,
+	})
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
 type allToDosResponse struct {
 	ToDos []model.ToDo `json:"todos"`
 }
@@ -29,7 +46,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("failed get all todos",
 				"request_id", requestID,
 				"error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, "Internal server error")
 
 			return
 		}
@@ -42,7 +59,7 @@ func GetAllToDos(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("failed to encode response",
 				"request_id", requestID,
 				"error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, "Internal server error")
 		}
 	}
 }
@@ -61,7 +78,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 				"request_id", requestID,
 				"error", err,
 				"id", idFromPath)
-			http.Error(w, "invalid id", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid id")
 
 			return
 		}
@@ -72,12 +89,13 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 				log.Debug("invalid id",
 					"request_id", requestID,
 					"error", err)
-				w.WriteHeader(http.StatusNotFound)
+				writeError(w, http.StatusNotFound, "ToDo id not found")
 			} else {
 				log.Error("error get todo by id",
 					"request_id", requestID,
 					"error", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+
+				writeError(w, http.StatusInternalServerError, "Internal server error")
 			}
 
 			return
@@ -87,7 +105,8 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("failed to encode response",
 				"request_id", requestID,
 				"error", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+
+			writeError(w, http.StatusInternalServerError, "Internal server error")
 		}
 	}
 }
@@ -95,7 +114,7 @@ func GetToDoByID(log logger.Logger, db database.Database) http.HandlerFunc {
 // CreateToDo returns a handler for creating a new ToDo item.
 func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		requestID := httputils.RequestID(r)
 
@@ -104,7 +123,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("failed to decode request",
 				"request_id", requestID,
 				"error", err)
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Internal request body")
 
 			return
 		}
@@ -112,7 +131,7 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		if len(toDo.Caption) == 0 {
 			log.Debug("empty caption",
 				"request_id", requestID)
-			http.Error(w, "Empty caption provided", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Empty caption provided")
 
 			return
 		}
@@ -120,12 +139,12 @@ func CreateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		id, err := db.CreateToDo(r.Context(), toDo)
 		if err != nil {
 			if errors.Is(err, database.ErrIDAlreadyExists) {
-				http.Error(w, "ToDo with this ID already exists", http.StatusConflict)
+				writeError(w, http.StatusConflict, "ToDo with this ID already exists")
 			} else {
 				log.Error("error create todo",
 					"request_id", requestID,
 					"error", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				writeError(w, http.StatusInternalServerError, "Internal server error")
 			}
 
 			return
@@ -146,7 +165,7 @@ type updateToDoRequest struct {
 // UpdateToDo returns a handler for updating an existing ToDo item.
 func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		requestID := httputils.RequestID(r)
 
@@ -157,7 +176,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				"request_id", requestID,
 				"error", err,
 				"id", idFromPath)
-			http.Error(w, "invalid id", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid id")
 
 			return
 		}
@@ -167,7 +186,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 			log.Error("failed to decode request",
 				"request_id", requestID,
 				"error", err)
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid request body")
 
 			return
 		}
@@ -175,7 +194,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 		if len(update.Caption) == 0 {
 			log.Debug("empty caption",
 				"request_id", requestID)
-			http.Error(w, "Empty caption provided", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Empty caption provided")
 
 			return
 		}
@@ -193,12 +212,12 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				log.Debug("invalid id",
 					"request_id", requestID,
 					"error", err)
-				w.WriteHeader(http.StatusNotFound)
+				writeError(w, http.StatusNotFound, "ToDo id not found")
 			} else {
 				log.Error("failed to update todo",
 					"request_id", requestID,
 					"error", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				writeError(w, http.StatusInternalServerError, "Internal server error")
 			}
 
 			return
@@ -211,7 +230,7 @@ func UpdateToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 // DeleteToDo returns a handler for deleting a ToDo item by ID.
 func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		requestID := httputils.RequestID(r)
 
@@ -222,7 +241,8 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				"request_id", requestID,
 				"error", err,
 				"id", idFromPath)
-			http.Error(w, "invalid id", http.StatusBadRequest)
+
+			writeError(w, http.StatusBadRequest, "Invalid id")
 
 			return
 		}
@@ -232,12 +252,12 @@ func DeleteToDo(log logger.Logger, db database.Database) http.HandlerFunc {
 				log.Debug("invalid id",
 					"request_id", requestID,
 					"error", err)
-				w.WriteHeader(http.StatusNotFound)
+				writeError(w, http.StatusNotFound, "ToDo id not found")
 			} else {
 				log.Error("failed to update todo",
 					"request_id", requestID,
 					"error", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				writeError(w, http.StatusInternalServerError, "Internal server error")
 			}
 
 			return
