@@ -23,17 +23,19 @@ func New(log logger.Logger) *MemDB {
 func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 	const funcName = "GetAllToDos"
 
+	select {
+	case <-ctx.Done():
+		db.log.Info("context cancelled", "func", funcName)
+
+		return nil, ctx.Err()
+	default:
+	}
+
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	res := make([]model.ToDo, len(db.data))
 	copy(res, db.data)
-
-	if err := ctx.Err(); err != nil {
-		db.log.Info("context cancelled", "func", funcName)
-
-		return nil, err
-	}
 
 	return res, nil
 }
@@ -42,16 +44,18 @@ func (db *MemDB) GetAllToDos(ctx context.Context) ([]model.ToDo, error) {
 func (db *MemDB) GetToDoByID(ctx context.Context, id int) (model.ToDo, error) {
 	const funcName = "GetToDoByID"
 
+	select {
+	case <-ctx.Done():
+		db.log.Info("context cancelled", "func", funcName)
+
+		return model.ToDo{}, ctx.Err()
+	default:
+	}
+
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	index, found := db.find(id)
-
-	if err := ctx.Err(); err != nil {
-		db.log.Info("context cancelled", "func", funcName)
-
-		return model.ToDo{}, err
-	}
 
 	if !found {
 		return model.ToDo{}, database.ErrNotFound
@@ -74,6 +78,14 @@ func (db *MemDB) find(id int) (int, bool) {
 func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	const funcName = "CreateToDo"
 
+	select {
+	case <-ctx.Done():
+		db.log.Info("context cancelled", "func", funcName)
+
+		return -1, ctx.Err()
+	default:
+	}
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -94,12 +106,6 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 	todo.CreatedAt = createdAt
 	todo.UpdatedAt = createdAt
 
-	if err := ctx.Err(); err != nil {
-		db.log.Info("context cancelled", "func", funcName)
-
-		return -1, err
-	}
-
 	db.data = append(db.data, todo)
 	db.maxID = todo.ID
 
@@ -109,6 +115,14 @@ func (db *MemDB) CreateToDo(ctx context.Context, todo model.ToDo) (int, error) {
 // UpdateToDo updates an existing ToDo item.
 func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	const funcName = "UpdateToDo"
+
+	select {
+	case <-ctx.Done():
+		db.log.Info("context cancelled", "func", funcName)
+
+		return ctx.Err()
+	default:
+	}
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
@@ -121,12 +135,6 @@ func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 	todo.CreatedAt = db.data[index].CreatedAt
 	todo.UpdatedAt = time.Now()
 
-	if err := ctx.Err(); err != nil {
-		db.log.Info("context cancelled", "func", funcName)
-
-		return err
-	}
-
 	db.data[index] = todo
 
 	return nil
@@ -136,18 +144,20 @@ func (db *MemDB) UpdateToDo(ctx context.Context, todo model.ToDo) error {
 func (db *MemDB) DeleteToDo(ctx context.Context, id int) error {
 	const funcName = "DeleteToDo"
 
+	select {
+	case <-ctx.Done():
+		db.log.Info("context cancelled", "func", funcName)
+
+		return ctx.Err()
+	default:
+	}
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
 	index, found := db.find(id)
 	if !found {
 		return database.ErrNotFound
-	}
-
-	if err := ctx.Err(); err != nil {
-		db.log.Info("context cancelled", "func", funcName)
-
-		return err
 	}
 
 	db.data = append(db.data[:index], db.data[index+1:]...)
