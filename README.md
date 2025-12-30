@@ -169,7 +169,8 @@
 - Go 1.25.5+
 - Docker
 - make (опционально)
-#### Запуск с make
+
+#### Запуск
 ```bash
 # Клонировать репозиторий
 git clone https://github.com/rnymphaea/ecom-internship.git
@@ -177,6 +178,19 @@ cd ecom-internship
 
 # Создать файл .env (см. .env.example)
 
-# Запустить сервис
+# Запуск с make
 make
+
+# Если make нет
+docker build -t todo-api . && docker run -p 8080:8080 --env-file .env todo-api
+```
+#### Использование make 
+```bash
+make          # или make all - сборка и запуск приложения
+make build    # сборка Docker образа
+make run      # запуск Docker контейнера
+make test     # запуск всех тестов
+make lint     # проверка кода линтером
+make prepare  # запуск тестов и линтера
+make api-test # запуск интеграционных тестов API
 ```
