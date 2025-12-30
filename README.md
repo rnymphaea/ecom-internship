@@ -31,6 +31,8 @@
 .
 ├── cmd/
 │   └── main.go                    # Точка входа в приложение
+├── Dockerfile 
+├── go.mod   
 ├── internal/
 │   ├── app/                       # Инициализация приложения
 │   │   ├── app.go                 # Запуск и graceful shutdown
@@ -44,15 +46,14 @@
 │   │       ├── mem.go             # Структура хранилища
 │   │       ├── todo.go            # CRUD операции
 │   │       └── todo_test.go       # Тесты хранилища
+│   ├── httputils/                 # HTTP утилиты
+│   │   └── utils.go               # Работа с контекстом
 │   ├── logger/                    # Логирование
 │   │   ├── logger.go              # Интерфейс логгера
 │   │   └── std/                   # Реализация с стандартной библиотекой
 │   │       └── logger.go          
 │   ├── model/                     # Модели данных
 │   │   └── model.go               
-│   ├── pkg/                       # Вспомогательные пакеты
-│   │   └── httputils/             # HTTP утилиты
-│   │       └── utils.go           # Работа с контекстом
 │   └── server/                    # HTTP сервер
 │       ├── handler/               # Обработчики запросов
 │       │   ├── handler.go         # Основные обработчики
@@ -62,13 +63,10 @@
 │       └── server.go              # HTTP сервер
 ├── .dockerignore                  
 ├── .gitignore                     
-├── .golangci.yaml                 
-├── Dockerfile                     
-├── go.mod                         
+├── .golangci.yaml                                   
 └── Makefile                       # Утилиты сборки и тестирования
 ```
 ---
-
 ## API Endpoints
 
 ### `GET /todos`
